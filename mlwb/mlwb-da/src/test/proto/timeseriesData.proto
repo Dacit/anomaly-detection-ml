@@ -1,0 +1,37 @@
+/**
+*
+* The .proto defintion file to generate the ProtocolBuffer class
+*
+* Represents the time series data
+*
+**/
+
+
+option java_package = "de.qaware.ekg.da.solr.et";
+
+option java_outer_classname = "ProtocolBuffer";
+
+//Our point
+message Point {
+    //The date as long
+    required int64 date = 1;
+    //The default value (Y-Axis)
+    required double value = 2;
+    //Some additional informations
+    optional Properties properties = 3;
+}
+//Our properties
+message Properties {
+    repeated Property property = 1;
+}
+//A property consists of an key (string) and a value (String)
+message Property {
+    required string key = 1;
+    required string value = 2;
+}
+
+//The data of a time series is a list of points
+message Points {
+    //The list of points
+    repeated Point points = 1;
+}

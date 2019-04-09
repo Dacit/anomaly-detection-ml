@@ -1,0 +1,6 @@
+rootProject.name = 'mlwb'
+
+include ':mlwb-dt'
+include ':mlwb-api'
+include ':mlwb-da'
+include ':mlwb-impl'

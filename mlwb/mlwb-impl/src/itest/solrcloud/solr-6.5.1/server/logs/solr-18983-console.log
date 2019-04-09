@@ -1,0 +1,6 @@
+2017-10-25 16:11:46.205 INFO  (main) [   ] o.e.j.s.Server jetty-9.3.14.v20161028
+2017-10-25 16:11:46.642 INFO  (main) [   ] o.a.s.s.SolrDispatchFilter  ___      _       Welcome to Apache Solr™ version 6.5.1
+2017-10-25 16:11:46.642 INFO  (main) [   ] o.a.s.s.SolrDispatchFilter / __| ___| |_ _   Starting in cloud mode on port 18983
+2017-10-25 16:11:46.642 INFO  (main) [   ] o.a.s.s.SolrDispatchFilter \__ \/ _ \ | '_|  Install dir: S:\codebase\ba\mlwb\mlwb-impl\src\itest\solrcloud\solr-6.5.1
+2017-10-25 16:11:46.658 INFO  (main) [   ] o.a.s.s.SolrDispatchFilter |___/\___/_|_|    Start time: 2017-10-25T16:11:46.642Z
+2017-10-25 16:11:46.658 INFO  (main) [   ] o.a.s.s.StartupLoggingUtils Property solr.log.muteconsole given. Muting ConsoleAppender named CONSOLE

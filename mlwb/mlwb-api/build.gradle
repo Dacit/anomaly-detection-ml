@@ -1,0 +1,9 @@
+description = 'ML workbench metrics API'
+
+dependencies {
+    compile 'org.apache.commons:commons-lang3'
+    compile 'com.google.guava:guava'
+
+    compileOnly 'org.apache.spark:spark-core_2.11'
+    compileOnly 'org.apache.spark:spark-sql_2.11'
+}

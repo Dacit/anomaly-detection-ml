@@ -1,0 +1,97 @@
+apply plugin: 'com.wiredforcode.spawn'
+
+description = 'ML workbench implementation using solr and spark'
+
+def solrPort = 18983
+def solrWorkDir = 'itest/solrcloud/solr-6.5.1/bin'
+
+// Integration test definitions:
+sourceSets {
+    itest {
+        java {
+            compileClasspath += main.output + test.output
+            runtimeClasspath += main.output + test.output
+            srcDir file('src/itest/java')
+        }
+    }
+}
+configurations {
+    itestCompile.extendsFrom testCompile
+    itestRuntime.extendsFrom testRuntime
+}
+
+dependencies {
+    compile project(':mlwb-api')
+    compile project(':mlwb-dt')
+    compile project(':mlwb-da')
+
+    compile('com.lucidworks.spark:spark-solr') {
+        exclude group: 'org.apache.spark'
+        exclude group: 'org.apache.hadoop'
+    }
+    compile 'com.google.guava:guava'
+
+    compileOnly 'org.apache.spark:spark-core_2.11'
+    compileOnly 'org.apache.spark:spark-sql_2.11'
+
+    testCompile 'org.apache.spark:spark-sql_2.11'
+
+    itestCompile 'org.apache.spark:spark-core_2.11'
+    itestCompile 'com.lucidworks.spark:spark-solr'
+}
+
+// Itest tasks
+task itest(type: Test) {
+    testClassesDir = sourceSets.itest.output.classesDir
+    classpath = sourceSets.itest.runtimeClasspath
+
+    // solr port + 1000 is default port for integrated zookeeper
+    systemProperty 'zkHost', 'localhost:' + (solrPort + 1000)
+    systemProperty 'collection', 'ekgdata'
+}
+check.dependsOn itest
+itest.mustRunAfter test
+tasks.withType(Test) {
+    reports.html.destination = file("${reporting.baseDir}/${name}")
+}
+
+// Solr cloud:
+task copySolr(type: Copy) {
+    from 'src/itest/solrcloud'
+    into 'build/itest/solrcloud'
+}
+// Makes spawn plugin not fail on windows
+import com.wiredforcode.gradle.spawn.*
+class PIDLessSpawnProcessTask extends SpawnProcessTask {
+    @Override
+    public void spawn() {
+        try {
+            super.spawn()
+        }
+        catch (NoSuchFieldException e) {
+        }
+    }
+}
+task startSolrCloud(type: PIDLessSpawnProcessTask) {
+    def executable = System.getProperty('os.name').toLowerCase(Locale.ROOT).contains('windows') ? 'solr.cmd' : 'solr'
+
+    command project.buildDir.getAbsolutePath().replaceAll('\\\\', '/') + '/' + solrWorkDir + '/' + executable + ' start -c -p ' + solrPort
+    ready 'Started Solr server'
+}
+task stopSolrCloud(type: Exec) {
+    workingDir = 'build/' + solrWorkDir
+
+    def solrStopOptions = ' stop -p ' + solrPort
+
+    if (System.getProperty('os.name').toLowerCase(Locale.ROOT).contains('windows')) {
+        // windows: (problem: spawns child process, thus won't stop)
+        commandLine 'cmd', '/c', 'solr.cmd' + solrStopOptions
+    }
+    else {
+        // linux:
+        commandLine './solr' + solrStopOptions
+    }
+}
+startSolrCloud.dependsOn copySolr
+itest.dependsOn startSolrCloud
+itest.finalizedBy stopSolrCloud

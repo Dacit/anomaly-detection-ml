@@ -1,0 +1,124 @@
+buildscript {
+    repositories {
+        jcenter()
+        mavenCentral()
+    }
+}
+
+plugins {
+    id 'java'
+    id 'io.spring.dependency-management' version '1.0.3.RELEASE'
+    id "com.wiredforcode.spawn" version "0.8.2"
+}
+
+ext {
+    solrVersion = '6.5.1'
+    sparkSolrVersion = '3.0.1'
+    sparkVersion = '2.1.1'
+
+    slf4jVersion = '1.7.21'
+}
+
+allprojects {
+    apply plugin: 'io.spring.dependency-management'
+
+    group 'de.qaware.mlwb'
+    version '1.2-SNAPSHOT'
+
+    dependencyManagement {
+        dependencies {
+            // logging
+            dependency group: 'org.slf4j', name: 'slf4j-api', version: slf4jVersion
+            dependency group: 'org.slf4j', name: 'log4j-over-slf4j', version: slf4jVersion
+
+            // spark + solr
+            dependency group: 'org.apache.solr', name: 'solr-solrj', version: solrVersion
+            dependency group: 'org.apache.spark', name: 'spark-sql_2.11', version: sparkVersion
+            dependency group: 'org.apache.spark', name: 'spark-core_2.11', version: sparkVersion
+            dependency(group: 'com.lucidworks.spark', name: 'spark-solr', version: sparkSolrVersion) {
+                // Spark and hadoop are provided and should not be pulled as transitive dependency
+                exclude group: 'org.apache.spark'
+                exclude group: 'org.apache.hadoop'
+            }
+
+            // other
+            dependency group: 'com.google.guava', name: 'guava', version: '21.0'
+            dependency group: 'org.apache.commons', name: 'commons-lang3', version: '3.4'
+            dependency group: 'commons-io', name: 'commons-io', version: '2.5'
+            dependency group: 'commons-codec', name: 'commons-codec', version: '1.10'
+            dependency group: 'org.codehaus.jackson', name: 'jackson-core-asl', version: '1.9.13'
+
+            // testing
+            dependency(group: 'junit', name: 'junit', version: '4.12') {
+                exclude group: 'org.hamcrest'
+            }
+            dependency group: 'org.hamcrest', name: 'hamcrest-all', version: '1.3'
+            dependency group: 'org.mockito', name: 'mockito-all', version: '1.10.19'
+            dependency group: 'nl.jqno.equalsverifier', name: 'equalsverifier', version: '2.3'
+
+            // test only deps
+            dependency group: 'com.google.protobuf', name: 'protobuf-java', version: '3.1.0'
+            dependency group: 'org.codehaus.jackson', name: 'jackson-mapper-asl', version: '1.9.13'
+        }
+    }
+}
+
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'maven'
+    apply plugin: 'maven-publish'
+
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
+
+    repositories {
+        mavenCentral()
+        maven { url 'http://maven.restlet.org' }
+    }
+
+    dependencies {
+        testCompile 'junit:junit'
+        testCompile 'org.hamcrest:hamcrest-all'
+        testCompile 'org.mockito:mockito-all'
+        testCompile 'nl.jqno.equalsverifier:equalsverifier'
+    }
+
+    jar {
+        manifest {
+            attributes(
+                    'Implementation-Title': project.description ?: project.name,
+                    'Implementation-Version': version,
+                    'Implementation-Vendor-Id': project.group,
+                    'Specification-Title': project.description ?: project.name,
+                    'Specification-Version': version,
+            )
+        }
+    }
+
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                from components.java
+            }
+        }
+        repositories {
+            maven {
+                url "https://www.qaware.de/nexus/content/repositories/qaware-internal-snapshots/"
+                credentials {
+                    username qawareUsername
+                    password qawarePassword
+                }
+            }
+        }
+    }
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '4.0'
+}
+
+// Project dependencies for distribution
+dependencies {
+    runtime project('mlwb-api')
+    runtime project('mlwb-impl')
+}

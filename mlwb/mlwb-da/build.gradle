@@ -1,0 +1,13 @@
+description = 'ML workbench data access'
+
+dependencies {
+    compile project(':mlwb-api')
+    compile project(':mlwb-dt')
+
+    compile 'com.google.guava:guava'
+    compile 'commons-io:commons-io'
+    compile 'commons-codec:commons-codec'
+
+    testCompile 'org.codehaus.jackson:jackson-mapper-asl'
+    testCompile 'com.google.protobuf:protobuf-java'
+}

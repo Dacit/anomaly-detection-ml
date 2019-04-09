@@ -1,0 +1,7 @@
+description = 'ML workbench data types'
+
+dependencies {
+    compile 'org.apache.solr:solr-solrj'
+    compile 'org.apache.commons:commons-lang3'
+    compile 'org.codehaus.jackson:jackson-core-asl'
+}

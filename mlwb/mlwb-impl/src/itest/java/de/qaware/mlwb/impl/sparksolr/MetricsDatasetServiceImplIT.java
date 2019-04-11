@@ -36,7 +36,8 @@ public class MetricsDatasetServiceImplIT extends AbstractSolrCloudIT {
 
     @BeforeClass
     public static void setUpClass() throws Exception {
-        SparkContext sc = SparkContext.getOrCreate(new SparkConf().setAppName("mlwb-itest").setMaster(SPARK_MASTER));
+        SparkContext sc = SparkContext.getOrCreate(
+                new SparkConf().setAppName("mlwb-itest").setMaster(SPARK_MASTER).set("spark.driver.host", "localhost"));
         sparkSQLContext = new SQLContext(new SparkSession(sc));
     }
 

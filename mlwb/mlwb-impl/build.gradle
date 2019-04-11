@@ -49,8 +49,11 @@ task itest(type: Test) {
     systemProperty 'zkHost', 'localhost:' + (solrPort + 1000)
     systemProperty 'collection', 'ekgdata'
 }
-check.dependsOn itest
-itest.mustRunAfter test
+// Integration tests may not run on all linux systems, so run automatically only on windows
+if (System.getProperty('os.name').toLowerCase(Locale.ROOT).contains('windows')) {
+    check.dependsOn itest
+    itest.mustRunAfter test
+}
 tasks.withType(Test) {
     reports.html.destination = file("${reporting.baseDir}/${name}")
 }
@@ -59,6 +62,18 @@ tasks.withType(Test) {
 task copySolr(type: Copy) {
     from 'src/itest/solrcloud'
     into 'build/itest/solrcloud'
+}
+task stopSolrCloud(type: Exec) {
+    workingDir = 'build/' + solrWorkDir
+
+    if (System.getProperty('os.name').toLowerCase(Locale.ROOT).contains('windows')) {
+        // windows: (problem: spawns child process, thus won't stop)
+        commandLine 'cmd', '/c', 'solr.cmd stop -p ' + solrPort
+    }
+    else {
+        // linux:
+        commandLine './solr', 'stop', '-p', solrPort
+    }
 }
 // Makes spawn plugin not fail on windows
 import com.wiredforcode.gradle.spawn.*
@@ -72,26 +87,25 @@ class PIDLessSpawnProcessTask extends SpawnProcessTask {
         }
     }
 }
-task startSolrCloud(type: PIDLessSpawnProcessTask) {
+task startSolrCloudWindows(type: PIDLessSpawnProcessTask) {
     def executable = System.getProperty('os.name').toLowerCase(Locale.ROOT).contains('windows') ? 'solr.cmd' : 'solr'
 
     command project.buildDir.getAbsolutePath().replaceAll('\\\\', '/') + '/' + solrWorkDir + '/' + executable + ' start -c -p ' + solrPort
     ready 'Started Solr server'
 }
-task stopSolrCloud(type: Exec) {
+// Default exec on linux
+task startSolrCloudLinux(type: Exec) {
     workingDir = 'build/' + solrWorkDir
-
-    def solrStopOptions = ' stop -p ' + solrPort
-
-    if (System.getProperty('os.name').toLowerCase(Locale.ROOT).contains('windows')) {
-        // windows: (problem: spawns child process, thus won't stop)
-        commandLine 'cmd', '/c', 'solr.cmd' + solrStopOptions
-    }
-    else {
-        // linux:
-        commandLine './solr' + solrStopOptions
-    }
+    
+    commandLine './solr', 'start', '-c', '-p', solrPort
 }
+// Wire linux and windows solr cloud start task together
+task startSolrCloud()
 startSolrCloud.dependsOn copySolr
 itest.dependsOn startSolrCloud
 itest.finalizedBy stopSolrCloud
+if (System.getProperty('os.name').toLowerCase(Locale.ROOT).contains('windows')) {
+    startSolrCloud.finalizedBy startSolrCloudWindows
+} else {
+    startSolrCloud.finalizedBy startSolrCloudLinux
+}

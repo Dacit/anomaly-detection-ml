@@ -101,15 +101,7 @@ subprojects {
                 from components.java
             }
         }
-        repositories {
-            maven {
-                url "https://www.qaware.de/nexus/content/repositories/qaware-internal-snapshots/"
-                credentials {
-                    username qawareUsername
-                    password qawarePassword
-                }
-            }
-        }
+        // add repo here to publish artifacts into
     }
 }
 
